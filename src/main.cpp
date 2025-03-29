@@ -7,17 +7,21 @@
 
 #define SENSOR_PIN 5 // Pino do sensor DS18B20
 
-const char *ssid = "CLARO_2GBAD89A"; // Nome da rede WiFi
-const char *password = "7DBAD89A";   // Senha do WiFi
+
+const char *ssid = ""; // Nome da rede WiFi
+const char *password = "";   // Senha do WiFi
+
 WiFiClient client;
-unsigned long myChannelNumber = 2866838; // Channel ID do ThingSpeak
-const char *APIkey = "K7SWAKRYYWR9VK96";
+unsigned long myChannelNumber = ""; // Channel ID do ThingSpeak
+const char *APIkey = ""
 
 // CONFIGURACOES DO EMAIL
 #define SMTP_HOST "smtp.gmail.com"
 #define SMTP_PORT 465
-#define AUTHOR_EMAIL "iotmail420@gmail.com"
-#define AUTHOR_PASSWORD "zzld nfiu tjgt kdjz"
+
+#define AUTHOR_EMAIL ""
+#define AUTHOR_PASSWORD ""
+
 
 // Adicionar os emails para mandar a mensagem
 std::vector<String> destinatarios = {
