@@ -11,9 +11,9 @@ app = FastAPI()
 # Configuração CORS para permitir requisições do frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:8080"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET","POST"],
     allow_headers=["*"],
 )
 
@@ -25,18 +25,20 @@ def get_db():
     finally:
         db.close()
 
-@app.post("/api/temperature/", response_model=schemas.Temperature)
-def create_temperature(temperature: schemas.TemperatureCreate, db: Session = Depends(get_db)):
-    return crud.create_temperature_reading(db, temperature=temperature)
+
+@app.get ("/")
+def home():
+    return{"message": "API FUNCIONA"}
 
 @app.get("/api/temperature/", response_model=list[schemas.Temperature])
 def read_temperatures(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    temperatures = crud.get_temperature_readings(db, skip=skip, limit=limit)
+    temperatures = db.query(models.TemperatureReading).order_by(models.TemperatureReading.created_at.desc()).offset(skip).limit(limit).all()
     return temperatures
+
 
 @app.get("/api/temperature/latest/", response_model=schemas.Temperature)
 def read_latest_temperature(db: Session = Depends(get_db)):
     temperature = db.query(models.TemperatureReading).order_by(models.TemperatureReading.created_at.desc()).first()
-    if temperature is None:
-        raise HTTPException(status_code=404, detail="No temperature readings found")
+    if not temperature:
+        raise HTTPException(status_code=404, detail="No readings found")
     return temperature
