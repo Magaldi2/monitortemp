@@ -5,7 +5,7 @@ class TemperatureBase(BaseModel):
     temperature: float
 
 class TemperatureCreate(TemperatureBase):
-    pass
+    pass  # Pode adicionar validações extras se necessário
 
 class Temperature(TemperatureBase):
     id: int

@@ -9,9 +9,12 @@ import {
   Title,
   Tooltip,
   Legend,
+  TimeScale
 } from 'chart.js';
+import 'chartjs-adapter-date-fns';
 import axios from 'axios';
 
+// Registre os componentes necessários incluindo TimeScale
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -19,7 +22,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  TimeScale // Adicionado para suporte a escalas de tempo
 );
 
 const TemperatureChart = () => {
@@ -31,7 +35,11 @@ const TemperatureChart = () => {
       try {
         const response = await axios.get('http://localhost:8000/api/temperature/?limit=20');
         if (response.data && response.data.length > 0) {
-          setTemperatureData(response.data);
+          // Ordena os dados por data/hora
+          const sortedData = [...response.data].sort((a, b) => 
+            new Date(a.created_at) - new Date(b.created_at)
+          );
+          setTemperatureData(sortedData);
           setError(null);
         } else {
           setError('Nenhum dado disponível');
@@ -50,31 +58,6 @@ const TemperatureChart = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Dados padrão para quando não há dados
-  const defaultData = {
-    labels: ['--'],
-    datasets: [{
-      label: 'Temperatura (°C)',
-      data: [0],
-      borderColor: 'rgb(75, 192, 192)',
-      backgroundColor: 'rgba(75, 192, 192, 0.5)',
-      tension: 0.1,
-    }]
-  };
-
-  const data = temperatureData.length > 0 ? {
-    labels: temperatureData.map(item => 
-      item.created_at ? new Date(item.created_at).toLocaleTimeString() : '--'
-    ),
-    datasets: [{
-      label: 'Temperatura (°C)',
-      data: temperatureData.map(item => item.temperature || 0),
-      borderColor: 'rgb(75, 192, 192)',
-      backgroundColor: 'rgba(75, 192, 192, 0.5)',
-      tension: 0.1,
-    }]
-  } : defaultData;
-
   const options = {
     responsive: true,
     plugins: {
@@ -87,17 +70,65 @@ const TemperatureChart = () => {
       },
     },
     scales: {
+      x: {
+        type: 'time', // Configura o eixo X como temporal
+        time: {
+          unit: 'minute',
+          displayFormats: {
+            minute: 'HH:mm'
+          },
+          tooltipFormat: 'HH:mm:ss'
+        },
+        title: {
+          display: true,
+          text: 'Horário'
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        }
+      },
       y: {
+        title: {
+          display: true,
+          text: 'Temperatura (°C)'
+        },
         min: temperatureData.length > 0 ? Math.min(...temperatureData.map(item => item.temperature)) - 2 : 0,
         max: temperatureData.length > 0 ? Math.max(...temperatureData.map(item => item.temperature)) + 2 : 30,
-      },
-    },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        }
+      }
+    }
+  };
+
+  const data = {
+    labels: temperatureData.map(item => item.created_at),
+    datasets: [{
+      label: 'Temperatura (°C)',
+      data: temperatureData.map(item => ({
+        x: item.created_at,
+        y: item.temperature
+      })),
+      borderColor: 'rgb(75, 192, 192)',
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      tension: 0.1,
+      pointRadius: 5,
+      pointHoverRadius: 7
+    }]
   };
 
   return (
-    <div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <Line options={options} data={data} />
+    <div style={{ 
+      backgroundColor: 'white',
+      padding: '20px',
+      borderRadius: '8px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    }}>
+      {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
+      <Line 
+        data={data} 
+        options={options} 
+      />
     </div>
   );
 };
