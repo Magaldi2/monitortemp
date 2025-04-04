@@ -9,7 +9,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# Configuração CORS para permitir requisições do frontend
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:8080","http://localhost:8080"],
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dependency
+
 def get_db():
     db = SessionLocal()
     try:
@@ -52,7 +52,7 @@ def create_temperature(temperature: schemas.TemperatureCreate, db: Session = Dep
 
     db_temperature = models.TemperatureReading(
         temperature=temperature.temperature,
-        created_at=datetime.now()  # Certifique-se de importar: from datetime import datetime
+        created_at=datetime.now()
     )
     db.add(db_temperature)
     db.commit()

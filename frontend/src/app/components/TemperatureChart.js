@@ -35,7 +35,7 @@ const TemperatureChart = () => {
       try {
         const response = await axios.get('http://localhost:8000/api/temperature/?limit=20');
         if (response.data && response.data.length > 0) {
-          // Ordena os dados por data/hora
+       
           const sortedData = [...response.data].sort((a, b) => 
             new Date(a.created_at) - new Date(b.created_at)
           );
@@ -71,7 +71,7 @@ const TemperatureChart = () => {
     },
     scales: {
       x: {
-        type: 'time', // Configura o eixo X como temporal
+        type: 'time', 
         time: {
           unit: 'minute',
           displayFormats: {
