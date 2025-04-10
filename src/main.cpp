@@ -8,7 +8,6 @@
 // Configurações WiFi
 const char* ssid = "LucasiPhone";
 const char* password = "maga1219";
-
 // CONFIGURACOES DO EMAIL
 #define SMTP_HOST "smtp.gmail.com"
 #define SMTP_PORT 465
@@ -28,7 +27,7 @@ MailSender emailSender(
     AUTHOR_PASSWORD,
     destinatarios);
 
-const char* serverUrl = "http://172.20.10.5:8000/api/temperature/";
+const char* serverUrl = "http://172.20.10.5:8000/api/temperature/";//alterar para o seu ip da rede (pc deve estar na mesma rede que o esp)
 const int sendInterval = 5000; // Envia dados a cada 5 segundos
 
 // Sensor de temperatura

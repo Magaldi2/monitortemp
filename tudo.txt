@@ -3,6 +3,8 @@ pip install "uvicorn[standard]"
 
 Rodar o backend: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-Rodar o frontend: npm run dev
+Rodar o frontend:
+npm install next react react-dom
+npm run dev
 
 inserir temperatura manualmente: curl -X POST -H "Content-Type: application/json" -d '{"temperature": 30}' http://localhost:8000/api/temperature/
