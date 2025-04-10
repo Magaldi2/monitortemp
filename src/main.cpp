@@ -4,8 +4,8 @@
 #include <DallasTemperature.h>
 
 // Configurações WiFi
-const char* ssid = "SpyNetwork";
-const char* password = "eugostodetortas";
+const char* ssid = "LucasiPhone";
+const char* password = "magas1219";
 
 
 const char* serverUrl = "http://172.16.227.128:8000/api/temperature";
