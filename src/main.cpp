@@ -2,13 +2,33 @@
 #include <HTTPClient.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <Arduino.h>
+#include "mail.h"
 
 // Configurações WiFi
-const char* ssid = "SpyNetwork";
-const char* password = "eugostodetortas";
+const char* ssid = "LucasiPhone";
+const char* password = "maga1219";
 
+// CONFIGURACOES DO EMAIL
+#define SMTP_HOST "smtp.gmail.com"
+#define SMTP_PORT 465
+#define AUTHOR_EMAIL "iotmail420@gmail.com"
+#define AUTHOR_PASSWORD "zzld nfiu tjgt kdjz"
 
-const char* serverUrl = "http://172.16.227.128:8000/api/temperature";
+// Adicionar os emails para mandar a mensagem
+std::vector<String> destinatarios = {
+    "magaldlucas6@gmail.com",
+    "danielsrossi43@gmail.com",
+    "lucasvalber2@gmail.com"};
+
+MailSender emailSender(
+    SMTP_HOST,
+    SMTP_PORT,
+    AUTHOR_EMAIL,
+    AUTHOR_PASSWORD,
+    destinatarios);
+
+const char* serverUrl = "http://172.20.10.5:8000/api/temperature/";
 const int sendInterval = 5000; // Envia dados a cada 5 segundos
 
 // Sensor de temperatura
@@ -30,7 +50,12 @@ void sendTemperatureData(float temperature) {
     http.addHeader("Content-Type", "application/json");
     
     // Cria o payload JSON
-    String payload = "{\"temperature\":" + String(temperature) + "}";
+    char tempBuffer[10];
+    dtostrf(temperature, 4, 2, tempBuffer);
+    
+    String payload = "{\"temperature\":";
+    payload.concat(tempBuffer);
+    payload.concat("}");
     
     // Envia a requisição POST
     int httpResponseCode = http.POST(payload);
@@ -52,7 +77,7 @@ void sendTemperatureData(float temperature) {
 }
 
 void connectToWiFi() {
-  Serial.println("\nConectando à rede: " + String(ssid));
+  Serial.println("\nConectando à rede");
   
   WiFi.disconnect(true);
   WiFi.mode(WIFI_STA);
