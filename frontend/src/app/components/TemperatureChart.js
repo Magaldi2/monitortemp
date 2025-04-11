@@ -84,7 +84,7 @@ const TemperatureChart = () => {
           text: 'Horário'
         },
         grid: {
-          color: 'rgba(0, 0, 0, 0.1)',
+          color: 'rgba(0, 0, 0, 0.4)',
         }
       },
       y: {
@@ -95,7 +95,7 @@ const TemperatureChart = () => {
         min: temperatureData.length > 0 ? Math.min(...temperatureData.map(item => item.temperature)) - 2 : 0,
         max: temperatureData.length > 0 ? Math.max(...temperatureData.map(item => item.temperature)) + 2 : 30,
         grid: {
-          color: 'rgba(0, 0, 0, 0.1)',
+          color: 'rgba(0, 0, 0, 0.4)',
         }
       }
     }
@@ -109,8 +109,8 @@ const TemperatureChart = () => {
         x: item.created_at,
         y: item.temperature
       })),
-      borderColor: 'rgb(75, 192, 192)',
-      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      borderColor: 'rgb(255, 119, 0)',
+      backgroundColor: 'rgba(255, 255, 255)',
       tension: 0.1,
       pointRadius: 5,
       pointHoverRadius: 7
@@ -119,10 +119,11 @@ const TemperatureChart = () => {
 
   return (
     <div style={{ 
-      backgroundColor: 'white',
+      backgroundColor: 'rgba(255, 255, 255)',
       padding: '20px',
       borderRadius: '8px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      border: '4px solid #d3d3d3'
     }}>
       {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
       <Line 
