@@ -34,7 +34,7 @@ const int sendInterval = 5000; // Envia dados a cada 5 segundos
 #define SENSOR_PIN 5
 OneWire oneWire(SENSOR_PIN);
 DallasTemperature DS18B20(&oneWire);
-
+float tempC;
 // Função para enviar dados ao servidor (AGORA CORRIGIDA)
 void sendTemperatureData(float temperature) {
   if (WiFi.status() == WL_CONNECTED) {
@@ -110,6 +110,8 @@ void setup() {
   
   DS18B20.begin();
   connectToWiFi();
+  //emailSender.begin();
+  //remover essa linha pra nao fica enviando email infinito
 }
 
 void loop() {
@@ -117,7 +119,7 @@ void loop() {
     connectToWiFi();
   } else {
     DS18B20.requestTemperatures();
-    float tempC = DS18B20.getTempCByIndex(0);
+    tempC = DS18B20.getTempCByIndex(0);
     
     if (tempC != DEVICE_DISCONNECTED_C) {
       Serial.print("Temperatura: ");
@@ -130,4 +132,29 @@ void loop() {
     }
   }
   delay(sendInterval);
+
+  if (tempC > 25.0)
+    {
+        String assunto = "‼️ALERTA: TEMPERATURA ELEVADA!!‼️";
+        String mensagem = "Atenção! Temperatura critica detectada na geladeira de vacinas:";
+        mensagem.concat(String(tempC, 1));
+        mensagem.concat("°C\n");
+        mensagem += "Ação necessária: Verificar geladeira imediatamente!";
+
+        if (!emailSender.sendMail(assunto.c_str(), mensagem.c_str()))
+        {
+            Serial.println("Falha no envio do alerta!");
+        }
+    }
+    else
+    {
+        String assunto = "Monitoramento da Geladeira";
+        String mensagem = "Temperatura normal: ";
+        mensagem.concat(String(tempC, 1));
+        mensagem.concat("°C\n");
+        if (!emailSender.sendMail(assunto.c_str(), mensagem.c_str()))
+        {
+            Serial.println("Falha no envio do relatório normal!");
+        }
+    }
 }
