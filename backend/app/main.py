@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from . import models, schemas, crud
 from app.database import SessionLocal, engine
 from datetime import datetime
+from pydantic import BaseModel
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -68,3 +69,18 @@ def clear_temperatures(db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+    
+class AlertTemperature(BaseModel):
+    temperature: float
+
+current_alert_temp = 30.0  # Valor padrão
+
+@app.post("/api/alert-temperature/")
+async def set_alert_temperature(temp: AlertTemperature, db: Session = Depends(get_db)):
+    global current_alert_temp
+    current_alert_temp = temp.temperature
+    return {"message": f"Alerta configurado para {current_alert_temp}°C"}
+
+@app.get("/api/alert-temperature/")
+async def get_alert_temperature():
+    return {"alert_temperature": current_alert_temp}

@@ -1,4 +1,3 @@
-// src/app/page.tsx
 'use client'
 
 import { Container, Box, Button, Alert, CircularProgress } from '@mui/material'
@@ -6,104 +5,61 @@ import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import axios from 'axios'
 
-const LatestTemperature = dynamic(
-  () => import('./components/LatestTemperature'),
-  { 
-    ssr: false,
-    loading: () => <Box sx={{ p: 2, textAlign: 'center' }}>Carregando temperatura...</Box>
-  }
-)
+import AlertTemperatureForm from '@/components/AlertTemperatureForm'
 
-const TemperatureChart = dynamic(
-  () => import('./components/TemperatureChart'),
-  { 
-    ssr: false,
-    loading: () => <Box sx={{ p: 2, textAlign: 'center' }}>Carregando gráfico...</Box>
-  }
-)
+const LatestTemperature = dynamic(() => import('@/components/LatestTemperature'), {
+  ssr: false,
+  loading: () => <Box sx={{ p: 2 }}>Carregando temperatura...</Box>,
+})
+
+const TemperatureChart = dynamic(() => import('@/components/TemperatureChart'), {
+  ssr: false,
+  loading: () => <Box sx={{ p: 2 }}>Carregando gráfico...</Box>,
+})
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [globalError, setGlobalError] = useState<string | null>(null)
+  const [globalSuccess, setGlobalSuccess] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
   const handleClearReadings = async () => {
-    if (!window.confirm('Tem certeza que deseja apagar TODAS as leituras de temperatura?')) {
-      return
-    }
+    if (!window.confirm('Tem certeza que deseja apagar TODAS as leituras?')) return
 
     setLoading(true)
-    setError(null)
-    setSuccess(null)
-
     try {
-      const response = await axios.delete('http://localhost:8000/api/temperature/clear')
-      setSuccess(response.data.message || 'Leituras apagadas com sucesso!')
-      // Atualiza a chave para forçar recarregamento dos componentes
+      const res = await axios.delete('http://localhost:8000/api/temperature/clear')
+      setGlobalSuccess(res.data.message || 'Leituras apagadas!')
       setRefreshKey(prev => prev + 1)
     } catch (err) {
-      console.error('Erro:', err)
+      if (axios.isAxiosError(err)) {
+        setGlobalError(err.response?.data?.detail || 'Erro ao limpar dados')
+      } else {
+        setGlobalError('Erro desconhecido')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Container maxWidth="lg" sx={{ 
-      mt: 8,  // Aumentado para acomodar o botão flutuante
-      mb: 4,
-      position: 'relative'  // Permite posicionamento absoluto do botão
-    }}>
-      {/* Botão flutuante de limpar leituras */}
+    <Container maxWidth="lg" sx={{ py: 4, position: 'relative', minHeight: '100vh' }}>
       <Button
         variant="contained"
         color="error"
         onClick={handleClearReadings}
         disabled={loading}
-        sx={{
-          position: 'absolute',
-          top: -60,  // Posiciona acima do conteúdo
-          right: 0,
-          minWidth: '200px',
-          fontWeight: 'bold',
-          boxShadow: 2,
-          '&:hover': {
-            boxShadow: 4,
-            backgroundColor: 'error.dark'
-          }
-        }}
+        sx={{ position: 'absolute', top: 16, right: 16, minWidth: 200 }}
       >
-        {loading ? (
-          <>
-            <CircularProgress size={24} color="inherit" sx={{ mr: 1 }}/>
-            Limpando...
-          </>
-        ) : (
-          'Limpar Todas as Leituras'
-        )}
+        {loading ? <CircularProgress size={24} /> : 'Limpar Leituras'}
       </Button>
 
-      {/* Mensagens de feedback */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {success}
-        </Alert>
-      )}
+      {globalError && <Alert severity="error" sx={{ mb: 3 }}>{globalError}</Alert>}
+      {globalSuccess && <Alert severity="success" sx={{ mb: 3 }}>{globalSuccess}</Alert>}
 
-      {/* Conteúdo principal com chave de atualização */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: 3,
-        mt: 2  // Espaço extra para o botão flutuante
-      }}>
-        <LatestTemperature key={`latest-${refreshKey}`} />
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 6 }}>
+        <AlertTemperatureForm />
+        <LatestTemperature key={`temp-${refreshKey}`} />
         <TemperatureChart key={`chart-${refreshKey}`} />
       </Box>
     </Container>
