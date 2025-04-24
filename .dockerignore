@@ -1,0 +1,13 @@
+# Ignorar ESP32
+src/
+include/
+lib/
+platformio.ini
+
+# Ignorar outras coisas desnecessárias
+*.db
+*.pyc
+node_modules
+.next
+.env
+__pycache__/
