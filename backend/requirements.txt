@@ -1,0 +1,4 @@
+fastapi 
+sqlalchemy 
+python-multipart
+uvicorn[standard]
