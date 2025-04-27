@@ -6,16 +6,23 @@ import { useState } from 'react'
 import axios from 'axios'
 
 import AlertTemperatureForm from '@/components/AlertTemperatureForm'
+import EmailRecipientsManager from '@/components/EmailRecipientsManager'
 
-const LatestTemperature = dynamic(() => import('@/components/LatestTemperature'), {
-  ssr: false,
-  loading: () => <Box sx={{ p: 2 }}>Carregando temperatura...</Box>,
-})
+const LatestTemperature = dynamic(
+  () => import('@/components/LatestTemperature'),
+  {
+    ssr: false,
+    loading: () => <Box sx={{ p: 2 }}>Carregando temperatura...</Box>,
+  }
+)
 
-const TemperatureChart = dynamic(() => import('@/components/TemperatureChart'), {
-  ssr: false,
-  loading: () => <Box sx={{ p: 2 }}>Carregando gráfico...</Box>,
-})
+const TemperatureChart = dynamic(
+  () => import('@/components/TemperatureChart'),
+  {
+    ssr: false,
+    loading: () => <Box sx={{ p: 2 }}>Carregando gráfico...</Box>,
+  }
+)
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(false)
@@ -59,6 +66,7 @@ export default function DashboardPage() {
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 6 }}>
         <AlertTemperatureForm />
+        <EmailRecipientsManager />
         <LatestTemperature key={`temp-${refreshKey}`} />
         <TemperatureChart key={`chart-${refreshKey}`} />
       </Box>
