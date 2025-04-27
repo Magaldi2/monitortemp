@@ -1,24 +1,23 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Arduino.h>
 #include "mail.h"
 
 // Configurações WiFi
-const char *ssid = "LucasiPhone";
-const char *password = "maga1219";
-// CONFIGURACOES DO EMAIL
+const char *ssid = "CLARO_2GBAD89A";
+const char *password = "7DBAD89A";
+
+// Configurações de e-mail
 #define SMTP_HOST "smtp.gmail.com"
 #define SMTP_PORT 465
 #define AUTHOR_EMAIL "iotmail420@gmail.com"
 #define AUTHOR_PASSWORD "zzld nfiu tjgt kdjz"
 
-// Adicionar os emails para mandar a mensagem
-std::vector<String> destinatarios = {
-    "magaldlucas6@gmail.com",
-    "danielsrossi43@gmail.com",
-    "lucasvalber2@gmail.com"};
+// Inicializa com uma lista vazia (será carregada depois)
+std::vector<String> destinatarios;
 
 MailSender emailSender(
     SMTP_HOST,
@@ -27,31 +26,32 @@ MailSender emailSender(
     AUTHOR_PASSWORD,
     destinatarios);
 
-const char *serverUrl = "http://172.20.10.2:8000/api/temperature/"; // alterar para o seu ip da rede (pc deve estar na mesma rede que o esp)
-const int sendInterval = 300000;                                    // Envia dados a cada 5 segundos
+// Configurações do servidor
+const char *serverUrlTemp = "http://192.168.0.221:8000/api/temperature/";
+const char *serverUrlEmails = "http://192.168.0.221:8000/api/emails/addresses/";
+const int sendInterval = 60000; // 5 minutos
 
 // Sensor de temperatura
 #define SENSOR_PIN 5
 OneWire oneWire(SENSOR_PIN);
 DallasTemperature DS18B20(&oneWire);
 float tempC;
-// Função para enviar dados ao servidor (AGORA CORRIGIDA)
+
+// Função para enviar temperatura ao servidor
 void sendTemperatureData(float temperature)
 {
   if (WiFi.status() == WL_CONNECTED)
   {
     HTTPClient http;
 
-    // Inicia a conexão HTTP
-    if (!http.begin(serverUrl))
+    if (!http.begin(serverUrlTemp))
     {
-      Serial.println("Erro ao conectar ao servidor");
+      Serial.println("Erro ao conectar ao servidor (temperatura)");
       return;
     }
 
     http.addHeader("Content-Type", "application/json");
 
-    // Cria o payload JSON
     char tempBuffer[10];
     dtostrf(temperature, 4, 2, tempBuffer);
 
@@ -59,20 +59,17 @@ void sendTemperatureData(float temperature)
     payload.concat(tempBuffer);
     payload.concat("}");
 
-    // Envia a requisição POST
     int httpResponseCode = http.POST(payload);
 
     if (httpResponseCode > 0)
     {
-      Serial.print("HTTP Response code: ");
+      Serial.print("Código de resposta HTTP: ");
       Serial.println(httpResponseCode);
     }
     else
     {
-      Serial.print("Error code: ");
+      Serial.print("Erro HTTP: ");
       Serial.println(httpResponseCode);
-      Serial.print("Resposta: ");
-      Serial.println(http.getString());
     }
 
     http.end();
@@ -83,6 +80,54 @@ void sendTemperatureData(float temperature)
   }
 }
 
+// Função para buscar lista de e-mails atualizada
+void fetchEmailList()
+{
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    HTTPClient http;
+
+    if (!http.begin(serverUrlEmails))
+    {
+      Serial.println("Erro ao conectar para buscar e-mails");
+      return;
+    }
+
+    int httpResponseCode = http.GET();
+
+    if (httpResponseCode == 200)
+    {
+      String response = http.getString();
+      Serial.println("Emails recebidos: " + response);
+
+      DynamicJsonDocument doc(1024);
+      DeserializationError error = deserializeJson(doc, response);
+
+      if (doc.is<JsonArray>())
+      {
+        std::vector<String> novosDestinatarios;
+        for (auto email : doc.as<JsonArray>())
+        {
+          novosDestinatarios.push_back(email.as<String>());
+        }
+        emailSender.setDestinatarios(novosDestinatarios);
+      }
+      else
+      {
+        Serial.println("Resposta não é um array de e-mails");
+      }
+    }
+    else
+    {
+      Serial.print("Erro ao buscar e-mails: ");
+      Serial.println(httpResponseCode);
+    }
+
+    http.end();
+  }
+}
+
+// Conectar WiFi
 void connectToWiFi()
 {
   Serial.println("\nConectando à rede");
@@ -93,26 +138,26 @@ void connectToWiFi()
 
   unsigned long startAttemptTime = millis();
 
-  while (WiFi.status() != WL_CONNECTED &&
-         millis() - startAttemptTime < 20000)
-  { // Timeout de 20s
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 20000)
+  {
     delay(500);
     Serial.print(".");
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // Pisca LED
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   }
 
   if (WiFi.status() != WL_CONNECTED)
   {
     Serial.println("\nFalha na conexão! Reiniciando...");
     delay(1000);
-    ESP.restart(); // Reinicia o ESP se não conectar
+    ESP.restart();
   }
   else
+
   {
     Serial.println("\nConectado com sucesso!");
     Serial.print("IP: ");
     Serial.println(WiFi.localIP());
-    digitalWrite(LED_BUILTIN, HIGH); // LED aceso quando conectado
+    digitalWrite(LED_BUILTIN, HIGH);
   }
 }
 
@@ -124,8 +169,7 @@ void setup()
 
   DS18B20.begin();
   connectToWiFi();
-  // emailSender.begin();
-  // remover essa linha pra nao fica enviando email infinito
+  fetchEmailList(); // Buscar os e-mails logo no começo
 }
 
 void loop()
@@ -146,36 +190,39 @@ void loop()
       Serial.println("°C");
 
       sendTemperatureData(tempC);
+
+      if (tempC > 25.0)
+      {
+        String assunto = "‼️ALERTA: TEMPERATURA ELEVADA‼️";
+        String mensagem = "Atenção! Temperatura crítica detectada: ";
+        mensagem.concat(String(tempC, 1));
+        mensagem.concat("°C.\nVerificar a geladeira imediatamente!");
+
+        if (!emailSender.sendMail(assunto.c_str(), mensagem.c_str()))
+        {
+          Serial.println("Falha no envio de alerta!");
+        }
+      }
+      else
+      {
+        String assunto = "Monitoramento da Geladeira";
+        String mensagem = "Temperatura normal: ";
+        mensagem.concat(String(tempC, 1));
+        mensagem.concat("°C.");
+
+        if (!emailSender.sendMail(assunto.c_str(), mensagem.c_str()))
+        {
+          Serial.println("Falha no envio de relatório!");
+        }
+      }
     }
     else
     {
       Serial.println("Erro na leitura do sensor!");
     }
   }
+
   delay(sendInterval);
 
-  if (tempC > 25.0)
-  {
-    String assunto = "‼️ALERTA: TEMPERATURA ELEVADA!!‼️";
-    String mensagem = "Atenção! Temperatura critica detectada na geladeira de vacinas:";
-    mensagem.concat(String(tempC, 1));
-    mensagem.concat("°C\n");
-    mensagem += "Ação necessária: Verificar geladeira imediatamente!";
-
-    if (!emailSender.sendMail(assunto.c_str(), mensagem.c_str()))
-    {
-      Serial.println("Falha no envio do alerta!");
-    }
-  }
-  else
-  {
-    String assunto = "Monitoramento da Geladeira";
-    String mensagem = "Temperatura normal: ";
-    mensagem.concat(String(tempC, 1));
-    mensagem.concat("°C\n");
-    if (!emailSender.sendMail(assunto.c_str(), mensagem.c_str()))
-    {
-      Serial.println("Falha no envio do relatório normal!");
-    }
-  }
+  fetchEmailList(); // Atualizar lista de e-mails a cada ciclo
 }
