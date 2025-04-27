@@ -13,9 +13,9 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080","http://localhost:8080"],
+    allow_origins=["http://localhost:3000","*"],
     allow_credentials=True,
-    allow_methods=["GET","POST","DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -69,7 +69,9 @@ def clear_temperatures(db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
+# Alert Management
 class AlertTemperature(BaseModel):
     temperature: float
 
@@ -84,3 +86,30 @@ async def set_alert_temperature(temp: AlertTemperature, db: Session = Depends(ge
 @app.get("/api/alert-temperature/")
 async def get_alert_temperature():
     return {"alert_temperature": current_alert_temp}
+
+
+# Email Management
+@app.post("/api/emails/", response_model=schemas.EmailRecipient)
+def add_email(recipient: schemas.EmailRecipientCreate, db: Session = Depends(get_db)):
+    db_email = models.EmailRecipient(email=recipient.email)
+    db.add(db_email)
+    db.commit()
+    db.refresh(db_email)
+    return db_email
+
+@app.get("/api/emails/", response_model=list[schemas.EmailRecipient])
+def list_emails(db: Session = Depends(get_db)):
+    return db.query(models.EmailRecipient).all()
+
+@app.delete("/api/emails/{email_id}")
+def delete_email(email_id: int, db: Session = Depends(get_db)):
+    email = db.query(models.EmailRecipient).filter(models.EmailRecipient.id == email_id).first()
+    if email is None:
+        raise HTTPException(status_code=404, detail="Email not found")
+    db.delete(email)
+    db.commit()
+    return {"message": "Email deleted"}
+
+@app.get("/api/emails/addresses/", response_model=list[str])
+def list_email_addresses(db: Session = Depends(get_db)):
+    return [e.email for e in db.query(models.EmailRecipient).all()]
