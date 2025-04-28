@@ -1,0 +1,9 @@
+__pycache__/
+*.db
+*.pyc
+.env
+
+/../src/
+/../include/
+/../lib/
+/../platformio.ini
