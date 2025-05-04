@@ -7,8 +7,8 @@
 #include "mail.h"
 
 // Configurações WiFi
-const char *ssid = "";
-const char *password = "";
+const char *ssid = ""; // Nome da rede WiFi
+const char *password = ""; // Senha da rede WiFi
 
 // Configurações de e-mail
 #define SMTP_HOST "smtp.gmail.com"

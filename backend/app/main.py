@@ -71,23 +71,6 @@ def clear_temperatures(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Alert Management
-class AlertTemperature(BaseModel):
-    temperature: float
-
-current_alert_temp = 30.0  # Valor padrão
-
-@app.post("/api/alert-temperature/")
-async def set_alert_temperature(temp: AlertTemperature, db: Session = Depends(get_db)):
-    global current_alert_temp
-    current_alert_temp = temp.temperature
-    return {"message": f"Alerta configurado para {current_alert_temp}°C"}
-
-@app.get("/api/alert-temperature/")
-async def get_alert_temperature():
-    return {"alert_temperature": current_alert_temp}
-
-
 # Email Management
 @app.post("/api/emails/", response_model=schemas.EmailRecipient)
 def add_email(recipient: schemas.EmailRecipientCreate, db: Session = Depends(get_db)):
