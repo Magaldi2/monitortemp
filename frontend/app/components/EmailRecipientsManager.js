@@ -90,7 +90,7 @@ export default function EmailRecipientsManager() {
         border: "1px solid #ccc",
         borderRadius: 2,
         p: 3,
-        backgroundColor: "#102f4",
+        backgroundColor: "#fff",
       }}
     >
       <Typography variant="h6" gutterBottom>

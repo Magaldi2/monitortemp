@@ -4,9 +4,8 @@ import { Container, Box, Button, Alert, CircularProgress } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import axios from 'axios'
-
-import AlertTemperatureForm from '@/components/AlertTemperatureForm'
 import EmailRecipientsManager from '@/components/EmailRecipientsManager'
+import PopupCard from './components/PopupCard'
 
 const LatestTemperature = dynamic(
   () => import('@/components/LatestTemperature'),
@@ -29,6 +28,10 @@ export default function DashboardPage() {
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [globalSuccess, setGlobalSuccess] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [popupOpen,setPopupOpen] = useState(false)
+
+  const handleOpenPopup= () => setPopupOpen(true)
+  const handleClosePopup= () => setPopupOpen(false)
 
   const handleClearReadings = async () => {
     if (!window.confirm('Tem certeza que deseja apagar TODAS as leituras?')) return
@@ -63,10 +66,18 @@ export default function DashboardPage() {
 
       {globalError && <Alert severity="error" sx={{ mb: 3 }}>{globalError}</Alert>}
       {globalSuccess && <Alert severity="success" sx={{ mb: 3 }}>{globalSuccess}</Alert>}
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 6 }}>
-        <AlertTemperatureForm />
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleOpenPopup}
+        sx={{ position: 'absolute', top: 16, left: 16, minWidth: 300}}
+      >
+        Emails
+      </Button>
+      <PopupCard open={popupOpen} onClose={handleClosePopup} >
         <EmailRecipientsManager />
+      </PopupCard>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 6 }}>
         <LatestTemperature key={`temp-${refreshKey}`} />
         <TemperatureChart key={`chart-${refreshKey}`} />
       </Box>
