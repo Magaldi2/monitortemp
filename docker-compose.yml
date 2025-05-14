@@ -11,7 +11,9 @@ services:
       - PYTHONUNBUFFERED=1
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: frontend
     ports:
       - "3000:3000"
