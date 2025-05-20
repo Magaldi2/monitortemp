@@ -8,6 +8,7 @@ class TemperatureReading(Base):
     id = Column(Integer, primary_key=True, index=True)
     temperature = Column(Float)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    device_id = Column(String, index=True)
 
 class EmailRecipient(Base):
     __tablename__ = "email_recipients"

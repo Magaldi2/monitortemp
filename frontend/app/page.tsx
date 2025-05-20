@@ -38,7 +38,7 @@ export default function DashboardPage() {
     setLoadingClear(true)
     try {
       const res = await axios.delete(
-        'http://localhost:8000/api/temperature/clear'
+        'http://localhost:8000/api/{device_id}/temperature/clear'
       )
       setGlobalSuccess(res.data.message || 'Leituras apagadas!')
       setRefreshKey((p) => p + 1)

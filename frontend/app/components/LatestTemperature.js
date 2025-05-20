@@ -11,7 +11,7 @@ const LatestTemperature = () => {
   useEffect(() => {
     const fetchLatestTemp = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/temperature/latest/');
+        const response = await axios.get('http://localhost:8000/api/{device_id}/temperature/latest/');
         if (response.data) {
           setLatestTemp(response.data);
           setError(null);

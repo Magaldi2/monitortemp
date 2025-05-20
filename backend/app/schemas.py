@@ -9,6 +9,8 @@ class TemperatureCreate(TemperatureBase):
 
 class Temperature(TemperatureBase):
     id: int
+    device_id: str
+    temperature: float
     created_at: datetime
 
     class Config:

@@ -34,7 +34,7 @@ const TemperatureChart = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8000/api/temperature/?limit=20"
+          "http://localhost:8000/api/{device_id}/temperature/?limit=20"
         );
         if (response.data && response.data.length > 0) {
           const sortedData = [...response.data].sort(
