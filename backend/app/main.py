@@ -98,3 +98,6 @@ def clear_temperatures(device_id: str, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/devices/", response_model=list[str])
+def list_devices(db: Session = Depends(get_db)):
+    return db.query(models.TemperatureReading.device_id).distinct().all()

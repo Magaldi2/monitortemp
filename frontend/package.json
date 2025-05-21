@@ -16,6 +16,7 @@
     "axios": "^1.8.4",
     "chart.js": "^4.4.8",
     "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-plugin-annotation": "^3.1.0",
     "frontend": "file:",
     "next": "^15.2.4",
     "react": "^19.1.0",
