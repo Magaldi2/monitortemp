@@ -100,4 +100,5 @@ def clear_temperatures(device_id: str, db: Session = Depends(get_db)):
 
 @app.get("/api/devices/", response_model=list[str])
 def list_devices(db: Session = Depends(get_db)):
-    return db.query(models.TemperatureReading.device_id).distinct().all()
+    result = db.query(models.TemperatureReading.device_id).distinct().all()
+    return [row[0] for row in result]
