@@ -34,5 +34,6 @@ export default function DevicePageContent({ deviceId }: Props) {
         <TemperatureChart deviceId={deviceId} />
       </Box>
     </Suspense>
+    
   )
 }

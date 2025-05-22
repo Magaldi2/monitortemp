@@ -13,11 +13,7 @@ import {
   Legend,
   TimeScale,
   ChartOptions,
-  FontSpec,
 } from 'chart.js'
-import annotationPlugin, {
-  AnnotationOptions,
-} from 'chartjs-plugin-annotation'
 import 'chartjs-adapter-date-fns'
 import axios from 'axios'
 import { Typography, Box } from '@mui/material'
@@ -30,8 +26,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  TimeScale,
-  annotationPlugin
+  TimeScale
 )
 
 interface Temperature {
@@ -43,12 +38,6 @@ interface Props {
   deviceId: string
 }
 
-// 1) Tipo para options com annotation
-type LineWithAnnotationOptions = ChartOptions<'line'> & {
-  plugins?: {
-    annotation?: Partial<AnnotationOptions>
-  }
-}
 
 const TemperatureChart = ({ deviceId }: Props) => {
   const [dataPoints, setDataPoints] = useState<Temperature[]>([])
@@ -59,7 +48,7 @@ const TemperatureChart = ({ deviceId }: Props) => {
       try {
         const res = await axios.get<Temperature[]>(
           `http://localhost:8000/api/${deviceId}/temperature/`,
-          { params: { limit: 20 } }
+          { params: { limit: 100 } }
         )
         if (res.data.length > 0) {
           const sorted = [...res.data].sort(
@@ -85,70 +74,74 @@ const TemperatureChart = ({ deviceId }: Props) => {
     return () => clearInterval(interval)
   }, [deviceId])
 
-  const options: LineWithAnnotationOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          color: '#333',
-          font: { size: 14 },
-        },
+const options: ChartOptions<'line'> = {
+  responsive: true,
+  plugins: {
+    legend: {
+      position: 'top',
+      labels: {
+        color: '#333', // Texto em cinza escuro
+        font: { size: 14 },
+      },
+    },
+    title: {
+      display: true,
+      text: 'Histórico de Temperatura',
+      color: '#333',
+      font: { size: 18, weight: 'bold' },
+    },
+  },
+  scales: {
+    x: {
+      type: 'time',
+      time: {
+        unit: 'minute',
+        displayFormats: { minute: 'HH:mm' },
+        tooltipFormat: 'HH:mm:ss',
       },
       title: {
         display: true,
-        text: 'Histórico de Temperatura',
+        text: 'Horário',
         color: '#333',
-        font: { size: 18, weight: 'bold' } as FontSpec,
+        font: { size: 14 },
       },
-      annotation: {
-        annotations: {
-          coldChainRange: {
-            type: 'box',
-            yMin: 2,
-            yMax: 8,
-            backgroundColor: 'rgba(0, 200, 0, 0.1)',
-            borderColor: 'rgba(0, 200, 0, 0.5)',
-            borderWidth: 1,
-          },
-        },
-      },
+      grid: { color: 'rgba(200, 200, 200, 0.5)' }, // Linhas de grade suaves
     },
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'minute',
-          displayFormats: { minute: 'HH:mm' },
-          tooltipFormat: 'HH:mm:ss',
-        },
-        title: { display: true, text: 'Horário' },
-        grid: { color: 'rgba(200, 200, 200, 0.5)' },
+    y: {
+      title: {
+        display: true,
+        text: 'Temperatura (°C)',
+        color: '#333',
+        font: { size: 14 },
       },
-      y: {
-        title: { display: true, text: 'Temperatura (°C)' },
-        min: 0,
-        max: 10,
-        ticks: { stepSize: 1 },
-        grid: { color: 'rgba(200, 200, 200, 0.5)' },
+      min: 0,
+      //max: 10,
+      ticks: {
+        stepSize: 1,
+        color: '#333',
       },
+      grid: { color: 'rgba(200, 200, 200, 0.5)' }, // Linhas de grade suaves
     },
-  }
+  },
+}
 
-  const chartData = {
-    labels: dataPoints.map((p) => p.created_at),
-    datasets: [
-      {
-        label: 'Temperatura (°C)',
-        data: dataPoints.map((p) => ({ x: p.created_at, y: p.temperature })),
-        borderColor: 'rgba(0, 123, 255, 0.9)',
-        backgroundColor: 'rgba(0, 123, 255, 0.2)',
-        tension: 0.3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-      },
-    ],
-  }
+const chartData = {
+  labels: dataPoints.map((item) => item.created_at),
+  datasets: [
+    {
+      label: 'Temperatura (°C)',
+      data: dataPoints.map((item) => ({
+        x: item.created_at,
+        y: item.temperature,
+      })),
+      borderColor: 'rgba(0, 123, 255, 0.9)', // Azul para a linha
+      backgroundColor: 'rgba(0, 123, 255, 0.2)', // Azul claro para preenchimento
+      tension: 0.3,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+    },
+  ],
+}
 
   return (
     <Box
