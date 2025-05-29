@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
   // 1) Puxa a lista de device_ids
   useEffect(() => {
-    axios.get('http://localhost:8000/api/devices/') // supondo endpoint que retorna ["ESP1","ESP2",...]
+    axios.get('http://localhost:8000/api/devices/') // <-- Trocar o IP aqui
       .then(res => setDeviceList(res.data))
       .catch(err => console.error('Erro ao buscar devices', err))
   }, [])
@@ -66,7 +66,7 @@ export default function DashboardPage() {
     setLoadingClear(true)
     try {
       const res = await axios.delete<ClearResponse>(
-        `http://localhost:8000/api/${selectedDevice}/temperature/clear`
+        `http://localhost:8000/api/${selectedDevice}/temperature/clear` // <-- Trocar o IP aqui
       )
       setGlobalSuccess(res.data.message)
       setRefreshKey(k => k + 1)

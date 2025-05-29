@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_ROOT = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_ROOT = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'; // <-- Trocar o IP aqui
 
 export const fetchLatestTemperature = (deviceId: string) =>
   axios.get(`${API_ROOT}/api/${deviceId}/temperature/latest/`);

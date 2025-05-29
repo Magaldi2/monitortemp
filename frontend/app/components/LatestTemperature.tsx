@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
-import { Card, CardContent, Typography, CircularProgress } from '@mui/material'
+import { Card, CardContent, Typography, CircularProgress, Box } from '@mui/material'
 import ThermostatIcon from '@mui/icons-material/Thermostat'
 
 interface Temperature {
@@ -20,29 +20,38 @@ const LatestTemperature = ({ deviceId }: Props) => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let ignore = false
+
     const fetchLatestTemp = async () => {
       setLoading(true)
       try {
         const res = await axios.get<Temperature>(
-          `http://localhost:8000/api/${deviceId}/temperature/latest/`
+          `http://localhost:8000/api/${deviceId}/temperature/latest/` // <-- Trocar o IP aqui
         )
-        if (res.data) {
-          setLatestTemp(res.data)
-          setError(null)
-        } else {
-          setError('Nenhum dado encontrado')
+        if (!ignore) {
+          if (res.data) {
+            setLatestTemp(res.data)
+            setError(null)
+          } else {
+            setError('Nenhum dado encontrado')
+          }
         }
       } catch (err) {
-        console.error('Error fetching latest temperature:', err)
-        setError('Erro ao carregar dados')
+        if (!ignore) {
+          console.error('Error fetching latest temperature:', err)
+          setError('Erro ao carregar dados')
+        }
       } finally {
-        setLoading(false)
+        if (!ignore) setLoading(false)
       }
     }
 
     fetchLatestTemp()
-    const interval = setInterval(fetchLatestTemp, 2000)
-    return () => clearInterval(interval)
+    const interval = setInterval(fetchLatestTemp, 60000) // 1 minuto
+    return () => {
+      ignore = true
+      clearInterval(interval)
+    }
   }, [deviceId])
 
   return (
@@ -52,9 +61,15 @@ const LatestTemperature = ({ deviceId }: Props) => {
       border: '1px solid #ddd',
       borderRadius: 2,
       backgroundColor: 'rgba(255, 255, 255)',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      position: 'relative'
     }}>
       <CardContent>
+        {loading && (
+          <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        )}
         <Typography
           variant="h5"
           component="div"
@@ -70,9 +85,7 @@ const LatestTemperature = ({ deviceId }: Props) => {
           Temperatura Atual
         </Typography>
 
-        {loading ? (
-          <CircularProgress />
-        ) : error ? (
+        {error ? (
           <Typography color="error">{error}</Typography>
         ) : latestTemp ? (
           <>
@@ -91,9 +104,11 @@ const LatestTemperature = ({ deviceId }: Props) => {
             </Typography>
           </>
         ) : (
-          <Typography color="error">
-            Não foi possível obter a temperatura
-          </Typography>
+          !loading && (
+            <Typography color="error">
+              Não foi possível obter a temperatura
+            </Typography>
+          )
         )}
       </CardContent>
     </Card>

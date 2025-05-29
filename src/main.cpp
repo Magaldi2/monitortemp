@@ -8,8 +8,8 @@
 #include "mail.h"
 
 // --- Configurações WiFi ---
-const char *ssid = "CLARO_2GBAD89A";
-const char *password = "7DBAD89A";
+const char *ssid = "";
+const char *password = "";
 
 // --- Configurações de e-mail ---
 #define SMTP_HOST "smtp.gmail.com"
@@ -32,7 +32,7 @@ MailSender emailSender(
     destinatarios);
 
 // --- Endereço do backend e intervalo ---
-const char *serverHost = "http://192.168.0.221:8000";
+const char *serverHost = "http://13.218.11.57:8000";
 const int sendInterval = 60000; // 60 segundos
 
 // Gera URL para envio de temperatura
