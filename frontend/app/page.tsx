@@ -1,21 +1,27 @@
 'use client'
 
-import React, { useState } from 'react'
-import axios from 'axios'
+import React, { useEffect, useState } from 'react'
+import axios, { AxiosError } from 'axios'
 import {
   Box,
   Container,
   Alert,
   CircularProgress,
-  Fab,    
+  Fab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  Typography,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import DeleteIcon from '@mui/icons-material/Delete'
 
 import MainLayout from '@/components/MainLayout'
 import PopupCard from '@/components/PopupCard'
 import EmailRecipientsManager from '@/components/EmailRecipientsManager'
 import dynamic from 'next/dynamic'
-import DeleteIcon from '@mui/icons-material/Delete'
 
 const LatestTemperature = dynamic(
   () => import('@/components/LatestTemperature'),
@@ -26,25 +32,48 @@ const TemperatureChart = dynamic(
   { ssr: false, loading: () => <CircularProgress /> }
 )
 
+interface ClearResponse {
+  message: string
+}
+
 export default function DashboardPage() {
+  const [deviceList, setDeviceList] = useState<string[]>([])
+  const [selectedDevice, setSelectedDevice] = useState<string>('')
   const [refreshKey, setRefreshKey] = useState(0)
   const [popupOpen, setPopupOpen] = useState(false)
   const [loadingClear, setLoadingClear] = useState(false)
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [globalSuccess, setGlobalSuccess] = useState<string | null>(null)
 
+  // 1) Puxa a lista de device_ids
+  useEffect(() => {
+    axios.get('http://localhost:8000/api/devices/') // <-- Trocar o IP aqui
+      .then(res => setDeviceList(res.data))
+      .catch(err => console.error('Erro ao buscar devices', err))
+  }, [])
+
+  const handleSelect = (e: SelectChangeEvent<string>) => {
+    setSelectedDevice(e.target.value)
+    // zerar mensagens e forçar reload
+    setGlobalError(null)
+    setGlobalSuccess(null)
+    setRefreshKey(k => k + 1)
+  }
+
   const handleClearReadings = async () => {
-    if (!confirm('Apagar TODAS as leituras?')) return
+    if (!selectedDevice) return
+    if (!confirm(`Apagar TODAS as leituras de ${selectedDevice}?`)) return
     setLoadingClear(true)
     try {
-      const res = await axios.delete(
-        'http://localhost:8000/api/temperature/clear'
+      const res = await axios.delete<ClearResponse>(
+        `http://localhost:8000/api/${selectedDevice}/temperature/clear` // <-- Trocar o IP aqui
       )
-      setGlobalSuccess(res.data.message || 'Leituras apagadas!')
-      setRefreshKey((p) => p + 1)
+      setGlobalSuccess(res.data.message)
+      setRefreshKey(k => k + 1)
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        setGlobalError(err.response?.data?.detail || 'Erro ao limpar dados')
+        const axiosErr = err as AxiosError<{ detail: string }>
+        setGlobalError(axiosErr.response?.data.detail || 'Erro ao limpar dados')
       } else {
         setGlobalError('Erro desconhecido')
       }
@@ -56,7 +85,23 @@ export default function DashboardPage() {
   return (
     <MainLayout>
       <Container maxWidth="lg" sx={{ mt: 4, position: 'relative' }}>
-        {/* Mensagens globais */}
+
+        {/* 1. Seletor de dispositivo */}
+        <FormControl fullWidth sx={{ mb: 3 }}>
+          <InputLabel id="select-device-label">Selecionar ESP32</InputLabel>
+          <Select
+            labelId="select-device-label"
+            value={selectedDevice}
+            label="Selecionar ESP32"
+            onChange={handleSelect}
+          >
+            {deviceList.map(id => (
+              <MenuItem key={id} value={id}>{id}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* 2. Mensagens globais */}
         {globalError && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {globalError}
@@ -68,36 +113,14 @@ export default function DashboardPage() {
           </Alert>
         )}
 
-        {/* Última Temperatura */}
-        <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <LatestTemperature key={refreshKey} />
-        </Box>
-
-        {/* Ações flutuantes */}
-        <Fab
-          color="primary"
-          aria-label="Adicionar e-mail"
-          onClick={() => setPopupOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            zIndex: 1500,
-          }}
-        >
-          <AddIcon />
-        </Fab>
-
+        {/* 3. Botões de ação (só habilita se tiver device) */}
         <Fab
           color="error"
           aria-label="Limpar leituras"
           onClick={handleClearReadings}
-          disabled={loadingClear}
+          disabled={loadingClear || !selectedDevice}
           sx={{
-            position: 'fixed',
-            bottom: 90,
-            right: 24,
-            zIndex: 1500,
+            position: 'fixed', bottom: 90, right: 24, zIndex: 1500,
           }}
         >
           {loadingClear
@@ -106,15 +129,45 @@ export default function DashboardPage() {
           }
         </Fab>
 
-        {/* Popup de E-mails */}
+        <Fab
+          color="primary"
+          aria-label="Adicionar e-mail"
+          onClick={() => setPopupOpen(true)}
+          sx={{
+            position: 'fixed', bottom: 24, right: 24, zIndex: 1500,
+          }}
+        >
+          <AddIcon />
+        </Fab>
+
         <PopupCard open={popupOpen} onClose={() => setPopupOpen(false)}>
           <EmailRecipientsManager />
         </PopupCard>
 
-        {/* Gráfico de Temperatura */}
-        <Box sx={{ mt: 4 }}>
-          <TemperatureChart key={`chart-${refreshKey}`} />
-        </Box>
+        {/* 4. Exibe dados apenas se device escolhido */}
+        {selectedDevice
+          ? (
+            <>
+              <Box sx={{ mb: 4, textAlign: 'center' }}>
+                <LatestTemperature
+                  key={refreshKey}
+                  deviceId={selectedDevice}
+                />
+              </Box>
+              <Box sx={{ mt: 4 }}>
+                <TemperatureChart
+                  key={`chart-${refreshKey}`}
+                  deviceId={selectedDevice}
+                />
+              </Box>
+            </>
+          )
+          : (
+            <Typography variant="h6" color="text.secondary" align="center">
+              Selecione um ESP32 para visualizar os dados.
+            </Typography>
+          )
+        }
       </Container>
     </MainLayout>
   )

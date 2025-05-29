@@ -28,7 +28,7 @@ export default function EmailRecipientsManager() {
     setError(null);
     try {
       const res = await axios.get(
-        "http://localhost:8000/api/emails/addresses/"
+        "http://13.218.11.57:8000/api/emails/addresses/"
       );
       setEmails(res.data);
     } catch {
@@ -49,7 +49,7 @@ export default function EmailRecipientsManager() {
     setError(null);
     setSuccess(null);
     try {
-      await axios.post("http://localhost:8000/api/emails/", {
+      await axios.post("http://localhost:8000/api/emails/", { // <-- Trocar o IP aqui
         email: newEmail,
       });
       setSuccess("E-mail adicionado com sucesso");
@@ -68,10 +68,10 @@ export default function EmailRecipientsManager() {
     setSuccess(null);
     try {
       // busca todos para achar o ID
-      const all = await axios.get("http://localhost:8000/api/emails/");
+      const all = await axios.get("http://localhost:8000/api/emails/"); // <-- Trocar o IP aqui
       const target = all.data.find((item) => item.email === email);
       if (target) {
-        await axios.delete(`http://localhost:8000/api/emails/${target.id}`);
+        await axios.delete(`http://localhost:8000/api/emails/${target.id}`); // <-- Trocar o IP aqui
         setSuccess("E-mail removido");
         fetchEmails();
       } else {

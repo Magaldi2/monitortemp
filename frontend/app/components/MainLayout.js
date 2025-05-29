@@ -1,4 +1,5 @@
 // components/MainLayout.js
+'use client'
 import { useState } from 'react';
 import { AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
