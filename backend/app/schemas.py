@@ -13,3 +13,15 @@ class Temperature(TemperatureBase):
 
     class Config:
         orm_mode = True
+
+
+class EmailRecipientBase(BaseModel):
+    email: str
+
+class EmailRecipientCreate(EmailRecipientBase):
+    pass
+
+class EmailRecipient(EmailRecipientBase):
+    id: int
+    class Config:
+        orm_mode = True

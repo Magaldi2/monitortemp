@@ -36,7 +36,7 @@ const LatestTemperature = () => {
     <Card sx={{ 
       minWidth: 275, 
       marginBottom: 2,
-      border: '4px solid #d3d3d3', // borda grossa cinza claro
+      border: '1px solid #ddd', // borda grossa cinza claro
       borderRadius: 2, // opcional: arredondamento igual ao anterior (~8px)
       backgroundColor: 'rgba(255, 255, 255)', // mesmo fundo translúcido
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)' // mesma sombra
@@ -49,10 +49,11 @@ const LatestTemperature = () => {
           sx={{ 
             display: 'flex', 
             justifyContent: 'center', 
-            alignItems: 'center' 
+            alignItems: 'center',
+            weight: 'bold',
           }}
         >
-          <ThermostatIcon sx={{ verticalAlign: 'middle', marginRight: 1 }} />
+          <ThermostatIcon sx={{ verticalAlign: 'middle', marginRight: 1 , weight:'bold'}} />
           Temperatura Atual
         </Typography>
 

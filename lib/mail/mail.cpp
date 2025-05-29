@@ -1,91 +1,54 @@
 #include "mail.h"
-#include <Arduino.h>
+#include <ESP_Mail_Client.h> // Certifique-se que você está usando a lib certa
 
-MailSender *MailSender::instance = nullptr;
-// CONFIG do EMAIL
-MailSender::MailSender(
-    const char *smtpHost,
-    int smtpPort,
-    const char *email,
-    const char *password,
-    std::vector<String> recipients)
+MailSender::MailSender(const char *smtpServer, int smtpPort, const char *email, const char *password, std::vector<String> destinatarios)
+    : smtpServer(smtpServer), smtpPort(smtpPort), email(email), password(password), destinatarios(destinatarios) {}
+
+void MailSender::setDestinatarios(std::vector<String> novosDestinatarios)
 {
-    // Configurações básicas
-    instance = this;
-    _config.server.host_name = smtpHost;
-    _config.server.port = smtpPort;
-    _config.login.email = email;
-    _config.login.password = password;
-    _config.time.ntp_server = "pool.ntp.org,time.nist.gov";
-    _config.time.gmt_offset = -3 * 3600; // GMT-3 em segundos
-    _config.time.day_light_offset = 0;
-
-    _recipients = recipients;
+    destinatarios = novosDestinatarios;
 }
 
-void MailSender::begin()
+bool MailSender::sendMail(const char *assunto, const char *mensagem)
 {
-    _smtp.debug(1);
-    _smtp.callback(_smtpCallback);
-}
+    SMTPSession smtp;
+    ESP_Mail_Session session;
 
-// Funcao de mandar o EMAIL
-bool MailSender::sendMail(const char *subject, const char *message)
-{
-    SMTP_Message msg;
-    msg.sender.name = "ESP";
-    msg.sender.email = _config.login.email;
-    msg.subject = subject;
+    session.server.host_name = smtpServer;
+    session.server.port = smtpPort;
+    session.login.email = email;
+    session.login.password = password;
+    session.login.user_domain = "";
 
-    // Le os emails dos usuarios
-    for (String& recipient : _recipients)
+    SMTP_Message message;
+    message.sender.name = "ESP32 Monitor";
+    message.sender.email = email;
+    message.subject = assunto;
+    message.addRecipient("Destinatário", destinatarios[0].c_str()); // Envia para o primeiro
+
+    // Enviar para os demais se houver
+    for (size_t i = 1; i < destinatarios.size(); i++)
     {
-        msg.addRecipient("Usuario", recipient.c_str());
+        message.addRecipient("Destinatário Extra", destinatarios[i].c_str());
     }
 
-    msg.text.content = strdup(message);
-    msg.text.charSet = "us-ascii";
+    message.text.content = mensagem;
+    message.text.charSet = "utf-8";
+    message.text.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
 
-    if (!_smtp.connect(&_config))
+    if (!smtp.connect(&session))
     {
-        Serial.println("Falha na conexao com o SMTP!");
-
+        Serial.println("Erro de conexão SMTP");
         return false;
     }
 
-    if (!MailClient.sendMail(&_smtp, &msg))
+    if (!MailClient.sendMail(&smtp, &message))
     {
-        ESP_MAIL_PRINTF("Erro: %s\n", _smtp.errorReason().c_str());
-
+        Serial.print("Erro ao enviar: ");
+        Serial.println(smtp.errorReason());
         return false;
     }
 
+    smtp.closeSession();
     return true;
-}
-
-void MailSender::_smtpCallback(SMTP_Status status)
-{
-    if (instance)
-    {
-        Serial.println(status.info());
-
-        // Verifica se o envio foi completado com sucesso
-        if (status.success())
-        {
-            Serial.println("----------------");
-            ESP_MAIL_PRINTF("Mensagens enviadas: %d\n", status.completedCount());
-            ESP_MAIL_PRINTF("Mensagens falhas: %d\n", status.failedCount());
-            Serial.println("----------------\n");
-
-            // Limpar resultados de envio
-            instance->_smtp.sendingResult.clear();
-        }
-
-        // Verifica códigos de erro específicos
-        if (instance->_smtp.statusCode() < 0)
-        { // Códigos negativos são erros internos
-            Serial.print("Erro SMTP: ");
-            Serial.println(instance->_smtp.errorReason().c_str());
-        }
-    }
 }

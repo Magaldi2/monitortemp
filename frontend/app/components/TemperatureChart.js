@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Line } from 'react-chartjs-2';
+import React, { useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,10 +9,10 @@ import {
   Title,
   Tooltip,
   Legend,
-  TimeScale
-} from 'chart.js';
-import 'chartjs-adapter-date-fns';
-import axios from 'axios';
+  TimeScale,
+} from "chart.js";
+import "chartjs-adapter-date-fns";
+import axios from "axios";
 
 // Registre os componentes necessários incluindo TimeScale
 ChartJS.register(
@@ -33,21 +33,22 @@ const TemperatureChart = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/temperature/?limit=20');
+        const response = await axios.get(
+          "http://localhost:8000/api/temperature/?limit=20"
+        );
         if (response.data && response.data.length > 0) {
-       
-          const sortedData = [...response.data].sort((a, b) => 
-            new Date(a.created_at) - new Date(b.created_at)
+          const sortedData = [...response.data].sort(
+            (a, b) => new Date(a.created_at) - new Date(b.created_at)
           );
           setTemperatureData(sortedData);
           setError(null);
         } else {
-          setError('Nenhum dado disponível');
+          setError("Nenhum dado disponível");
           setTemperatureData([]);
         }
       } catch (err) {
-        console.error('Error fetching temperature data:', err);
-        setError('Erro ao carregar dados');
+        console.error("Error fetching temperature data:", err);
+        setError("Erro ao carregar dados");
         setTemperatureData([]);
       }
     };
@@ -62,74 +63,112 @@ const TemperatureChart = () => {
     responsive: true,
     plugins: {
       legend: {
-        position: 'top',
+        position: "top",
+        labels: {
+          color: "#333", // Texto em cinza escuro
+          font: {
+            size: 14,
+          },
+        },
       },
       title: {
         display: true,
-        text: 'Histórico de Temperatura',
+        text: "Histórico de Temperatura",
+        color: "#333",
+        font: {
+          size: 18,
+          weight: "bold",
+        },
+      },
+      annotation: {
+        annotations: {
+          coldChainRange: {
+            type: "box",
+            yMin: 2,
+            yMax: 8,
+            backgroundColor: "rgba(0, 200, 0, 0.1)", // Verde claro
+            borderColor: "rgba(0, 200, 0, 0.5)",
+            borderWidth: 1,
+          },
+        },
       },
     },
     scales: {
       x: {
-        type: 'time', 
+        type: "time",
         time: {
-          unit: 'minute',
+          unit: "minute",
           displayFormats: {
-            minute: 'HH:mm'
+            minute: "HH:mm",
           },
-          tooltipFormat: 'HH:mm:ss'
+          tooltipFormat: "HH:mm:ss",
         },
         title: {
           display: true,
-          text: 'Horário'
+          text: "Horário",
+          color: "#333",
+          font: {
+            size: 14,
+          },
         },
         grid: {
-          color: 'rgba(0, 0, 0, 0.4)',
-        }
+          color: "rgba(200, 200, 200, 0.5)", // Linhas de grade suaves
+        },
       },
       y: {
         title: {
           display: true,
-          text: 'Temperatura (°C)'
+          text: "Temperatura (°C)",
+          color: "#333",
+          font: {
+            size: 14,
+          },
         },
-        min: temperatureData.length > 0 ? Math.min(...temperatureData.map(item => item.temperature)) - 2 : 0,
-        max: temperatureData.length > 0 ? Math.max(...temperatureData.map(item => item.temperature)) + 2 : 30,
+        min: 0,
+        max: 10,
+        ticks: {
+          stepSize: 1,
+          color: "#333",
+        },
         grid: {
-          color: 'rgba(0, 0, 0, 0.4)',
-        }
-      }
-    }
+          color: "rgba(200, 200, 200, 0.5)", // Linhas de grade suaves
+        },
+      },
+    },
   };
 
   const data = {
-    labels: temperatureData.map(item => item.created_at),
-    datasets: [{
-      label: 'Temperatura (°C)',
-      data: temperatureData.map(item => ({
-        x: item.created_at,
-        y: item.temperature
-      })),
-      borderColor: 'rgb(255, 119, 0)',
-      backgroundColor: 'rgba(255, 255, 255)',
-      tension: 0.1,
-      pointRadius: 5,
-      pointHoverRadius: 7
-    }]
+    labels: temperatureData.map((item) => item.created_at),
+    datasets: [
+      {
+        label: "Temperatura (°C)",
+        data: temperatureData.map((item) => ({
+          x: item.created_at,
+          y: item.temperature,
+        })),
+        borderColor: "rgba(0, 123, 255, 0.9)", // Azul para a linha
+        backgroundColor: "rgba(0, 123, 255, 0.2)", // Azul claro para preenchimento
+        tension: 0.3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      },
+    ],
   };
 
   return (
-    <div style={{ 
-      backgroundColor: 'rgba(255, 255, 255)',
-      padding: '20px',
-      borderRadius: '8px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      border: '4px solid #d3d3d3'
-    }}>
-      {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
-      <Line 
-        data={data} 
-        options={options} 
-      />
+    <div
+      style={{
+        backgroundColor: "#fff", // Fundo cinza claro
+        padding: "20px",
+        borderRadius: "8px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        border: "1px solid #ddd",
+      }}
+    >
+      {error && (
+        <div style={{ color: "red", marginBottom: "10px" }}>{error}</div>
+      )}
+      <Line data={data} options={options} />
     </div>
   );
 };
